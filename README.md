@@ -35,7 +35,6 @@
 - 🧪 **Quality**: CI/CD با GitHub Actions، تست واحد (Unity/cmocka/xUnit)، clang-format/clang-tidy  
 - 🏗 **Infra**: Docker/Compose، Dev Containers، Home Assistant integrations
 
-> من به «پایدار/قابل استقرار بودن» کد اهمیت می‌دهم: ساختار تمیز، CI سبز، artifactهای باینری، و مستندات واقعی.
 
 ---
 
@@ -70,13 +69,25 @@
 ![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?logo=opencv&logoColor=white)
 ![ONNX](https://img.shields.io/badge/ONNX%20Runtime-005CED?logo=onnx&logoColor=white)
 
+
 ---
 
-## 🔭 Current Focus
-- **ESP32/STM32 Production Templates**: CMake + FreeRTOS + OTA + Unit tests + CI artifacts  
-- **Drivers & BSPs**: I2C/SPI/UART/DMA/Timers، پوشش تست برای logic-level  
-- **Edge Gateways**: سرویس‌های C#/.NET برای MQTT/WS و پردازش ویدئو/تله‌متری  
-- **Home Assistant**: ادغام‌های تمیز، discovery اتوماتیک، و مستندات یکنواخت
+## 🎯 Current Focus
+
+- 🚀 **ESP32/STM32 Production Templates**  
+  CMake + FreeRTOS + OTA pipelines + Unit Testing + CI Artifacts  
+
+- 🔧 **Drivers & BSPs**  
+  Developing reusable libraries for **I2C / SPI / UART / DMA / Timers** with logic-level unit tests  
+
+- 🌐 **Edge Gateways**  
+  Building scalable **C#/.NET services** for MQTT / WebSocket / gRPC telemetry and vision processing  
+
+- 🏡 **Home Assistant Integrations**  
+  Clean, automated discovery flows · Well-documented components · Hassle-free deployments  
+
+---
+
 
 ---
 
