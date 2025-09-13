@@ -229,7 +229,7 @@ flowchart LR
   BROKER --> ALERT
 ```
 ---
-##🧩 Device Flow: Provisioning → Connectivity → OTA → Telemetry
+## 🧩 Device Flow: Provisioning → Connectivity → OTA → Telemetry
 ```mermaid
 sequenceDiagram
   participant Device as Edge Device (ESP32/STM32)
