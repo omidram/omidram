@@ -144,10 +144,129 @@
 ---
 
 ---
-## 🧩 Architecture Snapshot (Mermaid)
+## 🧩 Architecture Snapshot
 ```mermaid
 flowchart LR
-  Sensor[Sensors: I2C/SPI/UART] --> MCU[ESP32/STM32 + FreeRTOS]
-  MCU -->|MQTT/WS| Gateway[.NET Edge Gateway]
-  Gateway -->|REST/gRPC| Cloud[Services / HA / Dashboards]
-  Cloud -->|OTA| MCU
+  %% ───────────────────────── Styles ─────────────────────────
+  classDef edge   fill:#0b7285,stroke:#063b46,stroke-width:1.2,color:#fff;
+  classDef gw     fill:#2c2d84,stroke:#11134d,stroke-width:1.2,color:#fff;
+  classDef cloud  fill:#495057,stroke:#212529,stroke-width:1.2,color:#fff;
+  classDef store  fill:#6c757d,stroke:#343a40,color:#fff;
+  classDef broker fill:#198754,stroke:#0f5132,color:#fff;
+  classDef api    fill:#6f42c1,stroke:#41276b,color:#fff;
+  classDef alert  fill:#b02a37,stroke:#58151c,color:#fff;
+
+  %% ───────────────────────── Edge Device ─────────────────────────
+  subgraph EDGE["IoT Device — ESP32/STM32 (FreeRTOS)"]
+    direction TB
+    DRV["Peripherals<br/>I2C · SPI · UART · ADC · PWM"]:::edge
+    RTOS["Tasks<br/>sensor_task · net_task · ota_task · app_task"]:::edge
+    NET["Network Stack<br/>Wi-Fi/Ethernet · TCP/IP · TLS/mTLS"]:::edge
+    SEC["Secure Identity<br/>Device keys · X.509 certs"]:::edge
+    FS["Storage<br/>NVS · SPIFFS/LittleFS"]:::store
+    LOG["Diagnostics<br/>Structured logs · metrics · ringbuf"]:::edge
+    OTA["OTA Client<br/>HTTP(S) dual-slot · rollback"]:::edge
+    DRV --> RTOS --> NET
+    SEC --> NET
+    RTOS --> LOG
+    RTOS --> FS
+    OTA  --> FS
+  end
+
+  %% ───────────────────────── Edge Gateway ─────────────────────────
+  subgraph GATEWAY[".NET Edge Gateway"]
+    direction TB
+    IN["Ingress<br/>WebSocket · MQTT"]:::gw
+    PROC["Processing<br/>Rules · Filters · OpenCV/ONNX (opt)"]:::gw
+    QUEUE["Backpressure<br/>Channels/Queues"]:::gw
+    CACHE["Local Cache<br/>SQLite/Redis"]:::store
+    APIGW["Adapters<br/>REST/gRPC ↔ MQTT/WS"]:::api
+    IN --> PROC --> QUEUE --> APIGW
+    PROC --> CACHE
+  end
+
+  %% ───────────────────────── Cloud / On-Prem ─────────────────────────
+  subgraph CLOUD["Cloud / On-Prem Platform"]
+    direction TB
+    REG["Device Registry & Provisioning<br/>IDs · policies · certificate issuance"]:::cloud
+    BROKER["MQTT Broker"]:::broker
+    API["Core Services<br/>REST/gRPC APIs"]:::api
+    OTA_SRV["OTA Server<br/>firmware hosting & manifests"]:::cloud
+    TSDB["Time-Series DB<br/>Influx/Timescale"]:::store
+    DASH["Dashboards<br/>Home Assistant · Grafana"]:::cloud
+    ALERT["Monitoring & Alerts<br/>Prometheus/Alertmanager"]:::alert
+    CI["CI/CD — GitHub Actions<br/>builds · tests · artifacts · releases"]:::cloud
+
+    REG --> BROKER
+    API --> DASH
+    BROKER --> TSDB
+    TSDB --> DASH
+    CI --> OTA_SRV
+  end
+
+  %% ───────────────────────── Data / Control Flows ─────────────────────────
+  %% Telemetry & Commands
+  EDGE -- "telemetry (MQTT)" --> BROKER
+  BROKER -- "commands / RPC" --> EDGE
+
+  %% Edge ↔ Gateway
+  EDGE -- "WebSocket / MQTT" --> IN
+  APIGW -- "normalized events" --> API
+
+  %% Automations / Integrations
+  API -- "rules / automations" --> BROKER
+
+  %% OTA Pipeline
+  CI -- "signed artifacts" --> OTA_SRV
+  OTA_SRV -- "firmware.bin" --> EDGE
+
+  %% Provisioning / Security
+  REG -- "device certs / mTLS" --> EDGE
+
+  %% Observability
+  LOG -. "optional syslog/serial" .-> GATEWAY
+  API --> ALERT
+  BROKER --> ALERT
+```
+---
+##🧩 Device Flow: Provisioning → Connectivity → OTA → Telemetry
+```mermaid
+sequenceDiagram
+  participant Device as Edge Device (ESP32/STM32)
+  participant Gateway as .NET Edge Gateway
+  participant Cloud as Cloud Platform
+  participant Broker as MQTT Broker
+  participant OTA as OTA Server
+
+  %% Device Provisioning
+  Device->>Cloud: Device Provisioning (ID, policy, certs)
+  Cloud->>Device: Device Certs & Security Config (X.509, mTLS)
+  Note over Cloud, Device: Device is now provisioned and secured.
+
+  %% Device Connects to Gateway
+  Device->>Gateway: Connect via MQTT/WebSocket (Wi-Fi)
+  Gateway->>Device: Acknowledge Connection (MQTT CONNECT)
+  Note over Device, Gateway: Device is connected to gateway and can receive commands.
+
+  %% OTA Firmware Update
+  Device->>OTA: Request OTA Update (Current Version)
+  OTA->>Cloud: Check Latest Firmware Version
+  Cloud->>OTA: Return Latest Firmware (firmware.bin, manifest)
+  OTA->>Device: Firmware Download (via HTTP)
+  Device->>Device: Flash Firmware (Dual Partition, Rollback)
+  Note over Device, OTA: Device now has the updated firmware with OTA rollback enabled.
+
+  %% Telemetry Data Transmission
+  Device->>Broker: Publish Telemetry Data (Sensor readings, heartbeat)
+  Broker->>Gateway: Forward Telemetry Data (MQTT Publish)
+  Gateway->>Cloud: Send Data to Cloud (REST/gRPC)
+  Cloud->>Cloud: Store Telemetry in TSDB (InfluxDB, TimescaleDB)
+  Cloud->>Dashboard: Visualize Data in Grafana / HA
+  Note over Cloud, Device: Device is continuously sending telemetry to the cloud.
+
+  %% Commands & Automations (Optional)
+  Cloud->>Broker: Publish Commands (Control messages)
+  Broker->>Device: Forward Commands (MQTT Subscriptions)
+  Device->>Device: Execute Commands (e.g., Actuate motor, turn on/off relay)
+  Note over Cloud, Device: Device reacts to cloud-triggered commands or automation.
+```
