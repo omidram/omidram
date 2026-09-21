@@ -30,7 +30,7 @@
 > Tehran, Iran · Shipping reliable firmware and edge services; turning hardware ideas into production-ready IoT/IIoT systems.
 
 - 🧩 **Embedded**: ESP-IDF, STM32 HAL/LL، FreeRTOS، PlatformIO، Arduino (Core/ESPHome/MicroPython)  
-- 🧠 **Edge AI/Vision** (practical): OpenCV، ONNX Runtime، YOLO-based inference در لبه  
+- 🧠 **Edge AI/Vision** (practical): OpenCV، ONNX Runtime، YOLO-based inference   
 - 🌐 **Gateways/Backends**: C#/.NET (Minimal APIs، WebSocket، gRPC، MQTT)، Python (FastAPI، tooling)  
 - 🧪 **Quality**: CI/CD با GitHub Actions، تست واحد (Unity/cmocka/xUnit)، clang-format/clang-tidy  
 - 🏗 **Infra**: Docker/Compose، Dev Containers، Home Assistant integrations
